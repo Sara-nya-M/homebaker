@@ -1,0 +1,21 @@
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+npm-debug.log*
+
+# Java / Gradle / Backend
+.gradle/
+build/
+bin/
+out/
+*.class
+*.jar
+*.war
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+*.log
