@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: 'https://homebaker-3.onrender.com/',
   headers: {
     'Content-Type': 'application/json',
   },
