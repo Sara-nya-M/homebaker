@@ -1,8 +1,7 @@
 # ==============================================================================
 # Step 1: Build the application using Gradle Wrapper
 # ==============================================================================
-# Change '21' to '17' below if your build.gradle targets Java 17 instead
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:26-jdk-jammy AS build
 WORKDIR /app
 
 # Copy all project files into the build container
@@ -17,7 +16,7 @@ RUN ./gradlew bootJar --no-daemon
 # ==============================================================================
 # Step 2: Run the application in a lightweight production container
 # ==============================================================================
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:26-jre-jammy
 WORKDIR /app
 
 # Copy only the compiled JAR file from the build stage to keep the image small
