@@ -2,7 +2,8 @@
 FROM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /app
 COPY . .
-RUN ./gradlew bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon --stacktrace --info
+
 
 # Step 2: Run the application
 FROM eclipse-temurin:17-jre-jammy
