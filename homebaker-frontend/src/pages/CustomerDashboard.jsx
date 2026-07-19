@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAllProducts, getFilteredProducts, getCustomerOrders, getChatForOrder, sendMessage } from '../services/api';
+import Loader from '../components/Loader';
+import EmptyState from '../components/EmptyState';
 
 function CustomerDashboard() {
   const customerId = localStorage.getItem('userId');
@@ -11,7 +13,9 @@ function CustomerDashboard() {
   const [orders, setOrders] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [locationLoading, setLocationLoading] = useState(false);
-  
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
   // Chat States
   const [selectedOrderChat, setSelectedOrderChat] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -70,16 +74,20 @@ function CustomerDashboard() {
   };
 
   const fetchProducts = async () => {
+    setProductsLoading(true);
     try {
       const res = await getAllProducts();
       setAllProducts(res.data);
       setProducts(res.data);
     } catch (err) {
       console.error("Error fetching products", err);
+    } finally {
+      setProductsLoading(false);
     }
   };
 
   const fetchProductsWithCityFilter = async (city) => {
+    setProductsLoading(true);
     try {
       const res = await getAllProducts();
       setAllProducts(res.data);
@@ -93,15 +101,20 @@ function CustomerDashboard() {
       }
     } catch (err) {
       console.error("Error fetching products", err);
+    } finally {
+      setProductsLoading(false);
     }
   };
 
   const fetchOrders = async () => {
+    setOrdersLoading(true);
     try {
       const res = await getCustomerOrders(customerId);
       setOrders(res.data);
     } catch (err) {
       console.error("Error fetching orders", err);
+    } finally {
+      setOrdersLoading(false);
     }
   };
 
@@ -228,8 +241,16 @@ function CustomerDashboard() {
             <button className={`filter-button ${activeFilter === 'vegan' ? 'active' : ''}`} onClick={() => handleFilterClick('vegan')}>Vegan 🌱</button>
           </div>
 
-          {products.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)' }}>No bakes available matching filter.</p>
+          {productsLoading ? (
+            <Loader text="Fetching fresh bakes near you..." icon="🎂" />
+          ) : products.length === 0 ? (
+            <EmptyState
+              icon="🥐"
+              title="No Bakes Found"
+              description={`We couldn't find any baked goods matching '${activeFilter}' near ${userCity || 'your location'}.`}
+              actionText={activeFilter !== 'all' ? "Clear Dietary Filters" : null}
+              onAction={activeFilter !== 'all' ? () => handleFilterClick('all') : null}
+            />
           ) : (
             <div className="grid-layout">
               {products.map((p) => (
@@ -267,8 +288,16 @@ function CustomerDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: selectedOrderChat ? '2fr 1fr' : '1fr', gap: '2rem' }}>
           <div>
             <h3 style={{ marginBottom: '1.5rem', fontWeight: '800' }}>Order History</h3>
-            {orders.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)' }}>No orders placed yet.</p>
+            {ordersLoading ? (
+              <Loader text="Loading your order history..." icon="📦" />
+            ) : orders.length === 0 ? (
+              <EmptyState
+                icon="📦"
+                title="No Orders Placed Yet"
+                description="You haven't placed any custom cake or bake orders yet. Discover fresh local home bakers to get started!"
+                actionText="Explore Bakes"
+                onAction={() => setActiveTab('browse')}
+              />
             ) : (
               <table className="dashboard-table">
                 <thead>
@@ -300,16 +329,22 @@ function CustomerDashboard() {
                       </td>
                       <td>
                         <div className="actions-row">
-                          <button onClick={() => handleTrackRedirect(o.id)} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                            Track
+                          <button onClick={() => handleTrackRedirect(o.id)} className="btn btn-outline">
+                            📍 Track
                           </button>
-                          <button onClick={() => handleOpenChat(o)} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                          <button onClick={() => handleOpenChat(o)} className="btn btn-outline">
                             💬 Chat
                           </button>
                           {o.status === 'DELIVERED' && (
-                            <button onClick={() => handleRateRedirect(o.baker.id, o.id)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-                              Rate Baker
-                            </button>
+                            JSON.parse(localStorage.getItem(`reviewed_orders_${customerId}`) || '[]').includes(String(o.id)) ? (
+                              <span className="badge-action-reviewed">
+                                ✓ Reviewed
+                              </span>
+                            ) : (
+                              <button onClick={() => handleRateRedirect(o.baker.id, o.id)} className="btn btn-primary">
+                                ⭐ Rate Baker
+                              </button>
+                            )
                           )}
                         </div>
                       </td>
@@ -329,7 +364,11 @@ function CustomerDashboard() {
                 </div>
                 <div className="chat-messages">
                   {chatMessages.length === 0 ? (
-                    <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No messages. Send a message to coordinate bakes!</p>
+                    <EmptyState
+                      icon="💬"
+                      title="Start a Conversation"
+                      description="Send a message to coordinate cake design, dietary needs, or delivery timing directly with your baker!"
+                    />
                   ) : (
                     chatMessages.map((m) => (
                       <div key={m.id} className={`chat-bubble ${m.sender.id == customerId ? 'sent' : 'received'}`}>

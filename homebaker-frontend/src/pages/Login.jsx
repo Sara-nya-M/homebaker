@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../services/api';
+import Loader from '../components/Loader';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -8,6 +9,18 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token) {
+      if (role === 'BAKER') {
+        navigate('/baker-dashboard', { replace: true });
+      } else {
+        navigate('/customer-dashboard', { replace: true });
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,25 +36,19 @@ function Login() {
       localStorage.setItem('userId', data.id);
       localStorage.setItem('userName', data.name);
       localStorage.setItem('userEmail', data.email);
-      localStorage.setItem('city', data.city);
+      localStorage.setItem('city', data.city || '');
 
-      if (data.role === 'BAKER') {
-        navigate('/baker-dashboard');
-      } else {
-        navigate('/customer-dashboard');
-      }
-      
-      // Force page refresh to update Navbar state
-      window.location.reload();
+      const targetPath = data.role === 'BAKER' ? '/baker-dashboard' : '/customer-dashboard';
+      window.location.href = targetPath;
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password.');
-    } finally {
       setLoading(false);
     }
   };
 
   return (
     <div className="form-container">
+      {loading && <Loader text="Logging into HomeBaker..." fullScreen={true} icon="🔑" />}
       <h2 className="form-title">Welcome Back</h2>
       <p className="form-subtitle">Enter your credentials to enter the marketplace</p>
 

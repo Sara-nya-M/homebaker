@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { getProductsByBaker, createProduct, deleteProduct, getBakerOrders, updateOrderStatus, getChatForOrder, sendMessage } from '../services/api';
+import Loader from '../components/Loader';
+import EmptyState from '../components/EmptyState';
 
 function BakerDashboard() {
   const bakerId = localStorage.getItem('userId');
   const [activeTab, setActiveTab] = useState('products');
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   
   // Product Form State
   const [newProduct, setNewProduct] = useState({
@@ -36,20 +40,26 @@ function BakerDashboard() {
   }, [bakerId]);
 
   const fetchProducts = async () => {
+    setProductsLoading(true);
     try {
       const res = await getProductsByBaker(bakerId);
       setProducts(res.data);
     } catch (err) {
       console.error("Error fetching products", err);
+    } finally {
+      setProductsLoading(false);
     }
   };
 
   const fetchOrders = async () => {
+    setOrdersLoading(true);
     try {
       const res = await getBakerOrders(bakerId);
       setOrders(res.data);
     } catch (err) {
       console.error("Error fetching orders", err);
+    } finally {
+      setOrdersLoading(false);
     }
   };
 
@@ -314,8 +324,14 @@ function BakerDashboard() {
 
           <div>
             <h3 style={{ marginBottom: '1.5rem', fontWeight: '800' }}>Your Baked Products</h3>
-            {products.length === 0 ? (
-              <p style={{ color: 'var(--text-secondary)' }}>No products listed yet.</p>
+            {productsLoading ? (
+              <Loader text="Loading your baked products..." icon="👩‍🍳" />
+            ) : products.length === 0 ? (
+              <EmptyState
+                icon="🧁"
+                title="No Products Listed"
+                description="You haven't added any cakes or baked items to your store catalog yet. Use the form on the left to create your first product listing!"
+              />
             ) : (
               <div className="grid-layout">
                 {products.map((p) => (
@@ -352,8 +368,14 @@ function BakerDashboard() {
       {activeTab === 'orders' && (
         <div>
           <h3 style={{ marginBottom: '1.5rem', fontWeight: '800' }}>Manage Orders</h3>
-          {orders.length === 0 ? (
-            <p style={{ color: 'var(--text-secondary)' }}>No orders placed yet.</p>
+          {ordersLoading ? (
+            <Loader text="Loading customer orders..." icon="📦" />
+          ) : orders.length === 0 ? (
+            <EmptyState
+              icon="📦"
+              title="No Customer Orders Yet"
+              description="When customers place custom cake or bake orders with your bakery, they will appear here for you to accept and track progress."
+            />
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: selectedOrderChat ? '2fr 1fr' : '1fr', gap: '2rem' }}>
               <div>
@@ -401,28 +423,28 @@ function BakerDashboard() {
                           </span>
                         </td>
                         <td>
-                          <div className="actions-row" style={{ flexDirection: 'column', gap: '0.3rem' }}>
+                          <div className="actions-row">
                             {o.status === 'PENDING' && (
-                              <button onClick={() => handleStatusChange(o.id, 'CONFIRMED')} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
+                              <button onClick={() => handleStatusChange(o.id, 'CONFIRMED')} className="btn btn-primary">
                                 Confirm
                               </button>
                             )}
                             {o.status === 'CONFIRMED' && (
-                              <button onClick={() => handleStatusChange(o.id, 'BAKING')} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', backgroundColor: '#db2777' }}>
+                              <button onClick={() => handleStatusChange(o.id, 'BAKING')} className="btn btn-primary" style={{ backgroundColor: '#db2777' }}>
                                 Bake
                               </button>
                             )}
                             {o.status === 'BAKING' && (
-                              <button onClick={() => handleStatusChange(o.id, 'READY')} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', backgroundColor: '#059669' }}>
+                              <button onClick={() => handleStatusChange(o.id, 'READY')} className="btn btn-primary" style={{ backgroundColor: '#059669' }}>
                                 Ready
                               </button>
                             )}
                             {o.status === 'READY' && (
-                              <button onClick={() => handleStatusChange(o.id, 'DELIVERED')} className="btn btn-primary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', backgroundColor: '#4b5563' }}>
+                              <button onClick={() => handleStatusChange(o.id, 'DELIVERED')} className="btn btn-primary" style={{ backgroundColor: '#4b5563' }}>
                                 Deliver
                               </button>
                             )}
-                            <button onClick={() => handleOpenChat(o)} className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}>
+                            <button onClick={() => handleOpenChat(o)} className="btn btn-outline">
                               💬 Chat
                             </button>
                           </div>
@@ -442,7 +464,11 @@ function BakerDashboard() {
                     </div>
                     <div className="chat-messages">
                       {chatMessages.length === 0 ? (
-                        <p style={{ textAlign: 'center', color: 'var(--text-light)', marginTop: '2rem' }}>No messages. Send a message to coordinate bakes!</p>
+                        <EmptyState
+                          icon="💬"
+                          title="Start Chatting"
+                          description="Send a message to coordinate order specifications or delivery details directly with your customer!"
+                        />
                       ) : (
                         chatMessages.map((m) => (
                           <div key={m.id} className={`chat-bubble ${m.sender.id == bakerId ? 'sent' : 'received'}`}>

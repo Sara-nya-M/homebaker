@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
 import API, { createOrder } from '../services/api';
+import Loader from '../components/Loader';
 
 function CakeBuilder() {
   const [searchParams] = useSearchParams();
@@ -153,11 +154,12 @@ function CakeBuilder() {
   }
 
   if (!product) {
-    return <div className="main-content"><p>Loading custom configurator...</p></div>;
+    return <Loader text="Loading custom bake configurator..." icon="🎂" />;
   }
 
   return (
-    <div className="main-content">
+    <div className="cake-builder-wrapper">
+      {loading && <Loader text="Placing custom bake order & notifying baker..." fullScreen={true} icon="✨" />}
       <div style={{ marginBottom: '1.5rem' }}>
         <h2>Interactive Cake Builder</h2>
         <p style={{ color: 'var(--text-secondary)' }}>Customizing base bake: <strong>{product.name}</strong> by {product.baker.name}</p>

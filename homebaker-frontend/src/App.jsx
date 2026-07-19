@@ -22,14 +22,21 @@ function App() {
 
   // Protected Route wrappers
   const CustomerRoute = ({ children }) => {
-    if (!token) return <Navigate to="/login" />;
-    if (role !== 'CUSTOMER') return <Navigate to="/" />;
+    if (!token) return <Navigate to="/login" replace />;
+    if (role !== 'CUSTOMER') return <Navigate to="/" replace />;
     return children;
   };
 
   const BakerRoute = ({ children }) => {
-    if (!token) return <Navigate to="/login" />;
-    if (role !== 'BAKER') return <Navigate to="/" />;
+    if (!token) return <Navigate to="/login" replace />;
+    if (role !== 'BAKER') return <Navigate to="/" replace />;
+    return children;
+  };
+
+  const PublicOnlyRoute = ({ children }) => {
+    if (token) {
+      return <Navigate to={role === 'BAKER' ? '/baker-dashboard' : '/customer-dashboard'} replace />;
+    }
     return children;
   };
 
@@ -38,8 +45,8 @@ function App() {
       <div className="app-container">
         {/* Navigation Bar */}
         <nav className="navbar">
-          <Link to="/" className="navbar-brand">
-            🍰 HomeBaker
+          <Link to={token ? (role === 'BAKER' ? '/baker-dashboard' : '/customer-dashboard') : '/'} className="navbar-brand">
+            <span className="navbar-chef-icon">👨‍🍳</span> HomeBaker
           </Link>
           <div className="navbar-links">
             {token ? (
@@ -74,9 +81,9 @@ function App() {
         {/* Main Routing Outlet */}
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/" element={token ? <Navigate to={role === 'BAKER' ? '/baker-dashboard' : '/customer-dashboard'} replace /> : <Landing />} />
+            <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
+            <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
             
             {/* Baker Protected Dashboard */}
             <Route

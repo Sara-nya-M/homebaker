@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../services/api';
+import Loader from '../components/Loader';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,18 @@ function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (token) {
+      if (role === 'BAKER') {
+        navigate('/baker-dashboard', { replace: true });
+      } else {
+        navigate('/customer-dashboard', { replace: true });
+      }
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,6 +56,7 @@ function Register() {
 
   return (
     <div className="form-container">
+      {loading && <Loader text="Creating your HomeBaker account..." fullScreen={true} icon="🎂" />}
       <h2 className="form-title">Join HomeBaker</h2>
       <p className="form-subtitle">Create your account and start fresh bakes</p>
 

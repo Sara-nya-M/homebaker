@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import API from '../services/api';
+import Loader from '../components/Loader';
 
 function OrderTracking() {
   const [searchParams] = useSearchParams();
@@ -31,7 +32,7 @@ function OrderTracking() {
   }
 
   if (!order) {
-    return <div className="main-content"><p>Loading tracking info...</p></div>;
+    return <Loader text="Tracking your order status..." icon="🚚" />;
   }
 
   const currentStageIndex = stages.indexOf(order.status);
